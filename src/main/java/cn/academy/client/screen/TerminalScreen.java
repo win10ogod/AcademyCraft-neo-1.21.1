@@ -2,6 +2,7 @@ package cn.academy.client.screen;
 
 import cn.academy.AcademyCraft;
 import cn.academy.ability.AbilityState;
+import cn.academy.client.render.ACGuiTextures;
 import cn.academy.client.render.ACLegacyFont;
 import cn.academy.registry.ACSounds;
 import net.minecraft.client.gui.GuiGraphics;
@@ -39,6 +40,8 @@ public final class TerminalScreen extends Screen {
     private float scale = 1;
     private float originX;
     private float originY;
+    private double lastVirtualMouseY = VIRTUAL_HEIGHT * .5;
+    private int edgeScrollCooldown;
 
     public TerminalScreen() {
         super(Component.translatable("ac.gui.terminal.title"));
@@ -54,8 +57,18 @@ public final class TerminalScreen extends Screen {
 
     @Override
     protected void init() {
+        prepareTextureFiltering();
         refreshApps();
         updateTransform();
+    }
+
+    private void prepareTextureFiltering() {
+        for (ResourceLocation texture : new ResourceLocation[]{BACK, LOGO, APP_BACK, APP_HIGHLIGHT,
+                CURSOR, ARROW_UP, ARROW_DOWN}) ACGuiTextures.setLinearFilter(texture);
+        for (String app : new String[]{"settings", "skill_tree", "media_player", "freq_transmitter", "about"})
+            ACGuiTextures.setLinearFilter(appIcon(app));
+        for (int frame = 0; frame < 3; frame++)
+            ACGuiTextures.setLinearFilter(texture("apps/tutorial/icon_" + frame + ".png"));
     }
 
     private void refreshApps() {
@@ -81,9 +94,21 @@ public final class TerminalScreen extends Screen {
         return Math.max(0, (apps.size() + 2) / 3 - 3);
     }
 
+    private boolean scrollBy(int rows) {
+        int previous = scrollRow;
+        scrollRow = Mth.clamp(scrollRow + rows, 0, maxScroll());
+        if (scrollRow != previous) {
+            keyboardSelection = -1;
+            previousHovered = -1;
+            return true;
+        }
+        return false;
+    }
+
     private void updateTransform() {
+        // Fit the hologram to the viewport at every Minecraft GUI scale.  The old .78 cap made the
+        // terminal shrink into a small box on high-resolution displays using GUI scale 1 or 2.
         scale = Math.min((width - 18f) / VIRTUAL_WIDTH, (height - 18f) / VIRTUAL_HEIGHT);
-        scale = Math.min(scale, .78f);
         originX = (width - VIRTUAL_WIDTH * scale) * .5f;
         originY = (height - VIRTUAL_HEIGHT * scale) * .5f;
     }
@@ -110,6 +135,15 @@ public final class TerminalScreen extends Screen {
         if (minecraft != null && minecraft.player != null) {
             AbilityState state = AbilityState.load(minecraft.player);
             if (java.util.Objects.hash(state.terminalInstalled(), state.apps()) != stateHash) refreshApps();
+        }
+
+        // Preserve the original terminal's edge scrolling in addition to modern wheel/keyboard input.
+        int edgeDirection = lastVirtualMouseY <= 10 ? -1 : lastVirtualMouseY >= VIRTUAL_HEIGHT - 10 ? 1 : 0;
+        if (edgeDirection == 0 || maxScroll() == 0) edgeScrollCooldown = 0;
+        else if (edgeScrollCooldown > 0) edgeScrollCooldown--;
+        else {
+            scrollBy(edgeDirection);
+            edgeScrollCooldown = 8;
         }
     }
 
@@ -177,8 +211,9 @@ public final class TerminalScreen extends Screen {
         if (scrollRow > 0) gui.blit(ARROW_UP, 280, 133, 80, 20, 0, 0, 64, 17, 64, 17);
         if (scrollRow < maxScroll()) gui.blit(ARROW_DOWN, 280, 725, 80, 20, 0, 0, 64, 17, 64, 17);
 
+        lastVirtualMouseY = virtualY(mouseY);
         double vmx = Mth.clamp(virtualX(mouseX), 0, VIRTUAL_WIDTH);
-        double vmy = Mth.clamp(virtualY(mouseY), 0, VIRTUAL_HEIGHT);
+        double vmy = Mth.clamp(lastVirtualMouseY, 0, VIRTUAL_HEIGHT);
         int cursorSize = hovered >= 0 ? 28 : 22;
         float pulse = (float) (1 + .08 * Math.sin((openTicks + partialTick) * .25));
         cursorSize = Math.round(cursorSize * pulse);
@@ -245,6 +280,9 @@ public final class TerminalScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
+            double vx = virtualX(mouseX), vy = virtualY(mouseY);
+            if (vx >= 270 && vx <= 370 && vy >= 125 && vy <= 160 && scrollBy(-1)) return true;
+            if (vx >= 270 && vx <= 370 && vy >= 710 && vy <= 755 && scrollBy(1)) return true;
             int selected = appAt(mouseX, mouseY);
             if (selected >= 0 && selected < apps.size() && minecraft != null) {
                 openApp(selected);
@@ -256,10 +294,7 @@ public final class TerminalScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (scrollY != 0) {
-            scrollRow = Mth.clamp(scrollRow - (int) Math.signum(scrollY), 0, maxScroll());
-            return true;
-        }
+        if (scrollY != 0 && scrollBy(-(int) Math.signum(scrollY))) return true;
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 

@@ -3,6 +3,7 @@ package cn.academy.client.render;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
@@ -12,7 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Translucent GUI quad path for legacy textures that relied on fixed-pipeline alpha blending. */
+/** Translucent, linearly filtered GUI quad path for smoothly scaled legacy textures. */
 public final class ACGuiTextures {
     private static final Map<ResourceLocation, RenderType> TYPES = new HashMap<>();
 
@@ -39,6 +40,11 @@ public final class ACGuiTextures {
         gui.flush();
     }
 
+    /** Selects bilinear sampling for a regular GuiGraphics blit without changing its blend path. */
+    public static void setLinearFilter(ResourceLocation texture) {
+        Minecraft.getInstance().getTextureManager().getTexture(texture).setFilter(true, false);
+    }
+
     public static synchronized void clear() { TYPES.clear(); }
 
     private static synchronized RenderType type(ResourceLocation texture) {
@@ -46,7 +52,7 @@ public final class ACGuiTextures {
                 DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 256, false, true,
                 RenderType.CompositeState.builder()
                         .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexColorShader))
-                        .setTextureState(new RenderStateShard.TextureStateShard(location, false, false))
+                        .setTextureState(new RenderStateShard.TextureStateShard(location, true, false))
                         .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
                         .setCullState(RenderStateShard.NO_CULL)
                         .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)

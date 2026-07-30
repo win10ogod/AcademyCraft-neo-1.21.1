@@ -3,6 +3,8 @@ package cn.academy.client.screen;
 import cn.academy.AcademyCraft;
 import cn.academy.ability.AbilityState;
 import cn.academy.client.ACKeyMappings;
+import cn.academy.client.render.ACGuiTextures;
+import cn.academy.client.render.ACLegacyFont;
 import cn.academy.registry.ACItems;
 import com.mojang.math.Axis;
 import net.minecraft.Util;
@@ -16,7 +18,6 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
-import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -32,7 +33,6 @@ import org.lwjgl.glfw.GLFW;
 import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -75,7 +75,7 @@ public final class TutorialScreen extends Screen {
     private long selectedAt;
 
     private sealed interface ContentBlock permits TextBlock, ImageBlock, SpaceBlock {}
-    private record TextBlock(List<FormattedCharSequence> lines, int color, float size, int height) implements ContentBlock {}
+    private record TextBlock(List<String> lines, int color, float size, int height) implements ContentBlock {}
     private record ImageBlock(ResourceLocation texture, int sourceWidth, int sourceHeight,
                               int width, int height) implements ContentBlock {}
     private record SpaceBlock(int height) implements ContentBlock {}
@@ -105,12 +105,19 @@ public final class TutorialScreen extends Screen {
 
     @Override
     protected void init() {
+        prepareTextureFiltering();
         openedAt = Util.getMillis();
         if (minecraft != null && minecraft.player != null) {
             firstOpen = !minecraft.player.getPersistentData().getBoolean("academy:tutorial_opened");
             minecraft.player.getPersistentData().putBoolean("academy:tutorial_opened", true);
         }
         for (int i = 0; i < PAGES.length; i++) pageData[i] = loadPage(PAGES[i]);
+    }
+
+    private void prepareTextureFiltering() {
+        for (ResourceLocation texture : new ResourceLocation[]{LEFT_WINDOW, LOGO_0, LOGO_1, LOGO_2, LOGO_3,
+                SCROLL_TRACK, SCROLL_HANDLE, ARROW_LEFT, ARROW_RIGHT, TAG_VIEW, TAG_CRAFT, CRAFT_GRID,
+                METAL_FORMER, SMELTING, IMAG_FUSOR}) ACGuiTextures.setLinearFilter(texture);
     }
 
     private PageData loadPage(String page) {
@@ -152,6 +159,7 @@ public final class TutorialScreen extends Screen {
             if (image.matches()) {
                 ResourceLocation texture = ResourceLocation.tryParse(image.group(2));
                 if (texture != null) {
+                    ACGuiTextures.setLinearFilter(texture);
                     int[] dimensions = imageDimensions(texture);
                     int drawWidth = Math.min(150, dimensions[0]);
                     int drawHeight = Math.max(20, Math.round(dimensions[1] * drawWidth / (float) dimensions[0]));
@@ -172,9 +180,8 @@ public final class TutorialScreen extends Screen {
             if (!heading && clean.matches("^[-*+]\\s+.*")) clean = "• " + clean.substring(2);
             float size = heading ? headingLevel == 1 ? 11 : 9 : 8;
             int step = heading ? headingLevel == 1 ? 14 : 12 : 10;
-            MutableComponent styled = markdownText(clean);
-            int splitWidth = Math.max(20, Math.round(150 / (size / font.lineHeight)));
-            List<FormattedCharSequence> lines = font.split(styled, splitWidth);
+            String styled = markdownText(clean).getString();
+            List<String> lines = ACLegacyFont.wrap(styled, 150, size, false);
             blocks.add(new TextBlock(lines, heading ? 0xFF7DE5FF : 0xFFD9E7EC, size, step));
             height += lines.size() * step + 2;
         }
@@ -332,8 +339,10 @@ public final class TutorialScreen extends Screen {
     }
 
     private void metal(List<Preview> views, ItemStack input, ItemStack output, String mode) {
+        ResourceLocation icon = gui("icons/icon_former_" + mode + ".png");
+        ACGuiTextures.setLinearFilter(icon);
         views.add(new Preview(PreviewKind.METAL_FORMER, output, List.of(Ingredient.of(input)), 1, 1,
-                gui("icons/icon_former_" + mode + ".png"), 0));
+                icon, 0));
     }
 
     private void fusor(List<Preview> views, ItemStack input, ItemStack output, int amount) {
@@ -424,7 +433,7 @@ public final class TutorialScreen extends Screen {
 
     private void drawContent(GuiGraphics gui, PageData data, float x, float y) {
         float textX = x + 5, textY = y + 5, textWidth = 150, textHeight = 210.5f;
-        float max = Math.max(0, data.contentHeight - textHeight + 10);
+        float max = maxContentScroll();
         scroll = Mth.clamp(scroll, 0, max);
         int scissorLeft = Math.round(frameLeft() + textX * frameScale());
         int scissorTop = Math.round(frameTop() + textY * frameScale());
@@ -435,7 +444,7 @@ public final class TutorialScreen extends Screen {
         for (ContentBlock block : data.blocks) {
             if (block instanceof SpaceBlock space) cursorY += space.height;
             else if (block instanceof TextBlock text) {
-                for (FormattedCharSequence line : text.lines) {
+                for (String line : text.lines) {
                     if (cursorY >= textY - text.height && cursorY <= textY + textHeight)
                         drawSequence(gui, line, textX + 3, cursorY, text.size, text.color);
                     cursorY += text.height;
@@ -451,11 +460,11 @@ public final class TutorialScreen extends Screen {
         }
         gui.disableScissor();
 
-        gui.blit(SCROLL_TRACK, Math.round(x + 162.5f), Math.round(y + 2), 10, 217,
-                0, 0, 19, 433, 19, 433);
+        ACGuiTextures.blit(gui, SCROLL_TRACK, x + 162.5f, y + 2, 10, 217,
+                0, 0, 19, 433, 19, 433, .32f, .78f, 1, .32f);
         float progress = max <= 0 ? 0 : scroll / max;
-        gui.blit(SCROLL_HANDLE, Math.round(x + 162.5f), Math.round(y + 2 + progress * 163), 10, 53,
-                0, 0, 19, 106, 19, 106);
+        ACGuiTextures.blit(gui, SCROLL_HANDLE, x + 162.5f, y + 2 + progress * 163, 10, 53,
+                0, 0, 19, 106, 19, 106, .72f, .94f, 1, .9f);
     }
 
     private void drawPreview(GuiGraphics gui, float mouseX, float mouseY, float x, float y) {
@@ -626,52 +635,61 @@ public final class TutorialScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (selectedPage >= 0 && unlocked(selectedPage)) {
-            float max = Math.max(0, pageData[selectedPage].contentHeight - 200.5f);
-            scroll = Mth.clamp(scroll - (float) Math.signum(scrollY) * 20, 0, max);
-            return true;
-        }
+        if (scrollY != 0 && scrollBy(-(float) Math.signum(scrollY) * 20)) return true;
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        float amount = switch (keyCode) {
+            case GLFW.GLFW_KEY_UP -> -20;
+            case GLFW.GLFW_KEY_DOWN -> 20;
+            case GLFW.GLFW_KEY_PAGE_UP -> -180;
+            case GLFW.GLFW_KEY_PAGE_DOWN -> 180;
+            case GLFW.GLFW_KEY_HOME -> -Float.MAX_VALUE;
+            case GLFW.GLFW_KEY_END -> Float.MAX_VALUE;
+            default -> 0;
+        };
+        if (amount != 0 && scrollBy(amount)) return true;
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    private float maxContentScroll() {
+        return selectedPage < 0 || pageData[selectedPage] == null || !unlocked(selectedPage) ? 0
+                : Math.max(0, pageData[selectedPage].contentHeight - 200.5f);
+    }
+
+    private boolean scrollBy(float amount) {
+        float previous = scroll;
+        scroll = Mth.clamp(scroll + amount, 0, maxContentScroll());
+        return scroll != previous;
     }
 
     private void updateScroll(float virtualY, float rightY) {
         if (selectedPage < 0) return;
-        float max = Math.max(0, pageData[selectedPage].contentHeight - 200.5f);
         float progress = Mth.clamp((virtualY - rightY - 28.5f) / 163f, 0, 1);
-        scroll = max * progress;
+        scroll = maxContentScroll() * progress;
     }
 
     private void drawWrapped(GuiGraphics gui, String text, float x, float y, float width,
                              float size, int color, int step, int maxLines) {
         if (text == null || text.isBlank()) return;
-        int splitWidth = Math.max(20, Math.round(width / (size / font.lineHeight)));
-        List<FormattedCharSequence> lines = font.split(markdownText(text), splitWidth);
+        List<String> lines = ACLegacyFont.wrap(markdownText(text).getString(), Math.round(width), size, false);
         for (int i = 0; i < Math.min(maxLines, lines.size()); i++)
             drawSequence(gui, lines.get(i), x, y + i * step, size, color);
     }
 
-    private void drawSequence(GuiGraphics gui, FormattedCharSequence text, float x, float y, float size, int color) {
-        float textScale = size / Math.max(1f, font.lineHeight);
-        gui.pose().pushPose();
-        gui.pose().translate(x, y, 8);
-        gui.pose().scale(textScale, textScale, 1);
-        gui.drawString(font, text, 0, 0, color, false);
-        gui.pose().popPose();
+    private void drawSequence(GuiGraphics gui, String text, float x, float y, float size, int color) {
+        ACLegacyFont.draw(gui, Component.literal(text), x, y, size, color,
+                ACLegacyFont.LEFT, 0, false);
     }
 
     private void drawFittedText(GuiGraphics gui, String text, float x, float y, float width,
                                 float size, int color, Align align) {
-        float textScale = size / Math.max(1f, font.lineHeight);
-        float rendered = font.width(text) * textScale;
-        if (rendered > width) textScale *= width / rendered;
-        float actual = font.width(text) * textScale;
-        float drawX = align == Align.RIGHT ? x + width - actual
-                : align == Align.CENTER ? x + (width - actual) * .5f : x;
-        gui.pose().pushPose();
-        gui.pose().translate(drawX, y, 8);
-        gui.pose().scale(textScale, textScale, 1);
-        gui.drawString(font, text, 0, 0, color, false);
-        gui.pose().popPose();
+        int alignment = align == Align.RIGHT ? ACLegacyFont.RIGHT
+                : align == Align.CENTER ? ACLegacyFont.CENTER : ACLegacyFont.LEFT;
+        float anchor = align == Align.RIGHT ? x + width : align == Align.CENTER ? x + width * .5f : x;
+        ACLegacyFont.draw(gui, Component.literal(text), anchor, y, size, color, alignment, width, false);
     }
 
     private static void drawTexture(GuiGraphics gui, ResourceLocation texture, float x, float y,

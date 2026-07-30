@@ -76,7 +76,10 @@ public final class DeveloperScreen extends Screen {
     }
 
     private float uiScale() {
-        return Math.min(1, Math.min((width - 8f) / MAIN_W, (height - 8f) / MAIN_H));
+        // Do not cap this at one: a cap makes the interface physically tiny when the player uses a
+        // low Minecraft GUI scale, while high GUI scales fill the same window.  Fitting to the
+        // available viewport keeps both the machine and portable variants consistently sized.
+        return Math.min((width - 8f) / MAIN_W, (height - 8f) / MAIN_H);
     }
     private float left() { return (width - MAIN_W * uiScale()) * .5f; }
     private float top() { return (height - MAIN_H * uiScale()) * .5f; }
@@ -196,8 +199,8 @@ public final class DeveloperScreen extends Screen {
     }
 
     private void drawFrame(GuiGraphics gui, AbilityState state, AbilityCategory category, float mouseX, float mouseY) {
-        ACGuiTextures.blit(gui, PARENT_LEFT, 4, 0, 109, 187, 0, 0, 217, 374, 217, 374);
-        ACGuiTextures.blit(gui, UI_LEFT, 4, 0, 109, 187, 0, 0, 217, 374, 217, 374);
+        ACGuiTextures.blit(gui, PARENT_LEFT, 4, 0, 108.5f, 187, 0, 0, 217, 374, 217, 374);
+        ACGuiTextures.blit(gui, UI_LEFT, 4, 0, 108.5f, 187, 0, 0, 217, 374, 217, 374);
         ACGuiTextures.blit(gui, PARENT_RIGHT, 118, 0, 278, 187, 0, 0, 556, 374, 556, 374);
         ACGuiTextures.blit(gui, UI_RIGHT, 118, 0, 278, 187, 0, 0, 556, 374, 556, 374);
 
@@ -207,7 +210,7 @@ public final class DeveloperScreen extends Screen {
         int sourceY = Mth.clamp(Math.round((py + .5f) * 3), 0, 3);
         ACGuiTextures.blit(gui, AREA_BACK, AREA_X, AREA_Y, AREA_W, AREA_H,
                 sourceX, sourceY, 507, 276, 512, 279);
-        ACGuiTextures.blit(gui, PARENT_MACHINE, 4, 0, 109, 187,
+        ACGuiTextures.blit(gui, PARENT_MACHINE, 4, 0, 108.5f, 187,
                 0, 0, 217, 374, 217, 374);
 
         ResourceLocation icon = category == null ? NO_CATEGORY : ResourceLocation.fromNamespaceAndPath(
