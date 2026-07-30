@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "academy:item/factor_electromaster"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 0
+      },
+      "model": "academy:item/factor_electromaster"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "academy:item/factor_meltdowner"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 2
+      },
+      "model": "academy:item/factor_teleporter"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 3
+      },
+      "model": "academy:item/factor_vecmanip"
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "variants": {
+    "facing=north,visual_stage=0": {
+      "model": "academy:block/node_basic"
+    },
+    "facing=north,visual_stage=1": {
+      "model": "academy:block/node_basic_stage_1"
+    },
+    "facing=north,visual_stage=2": {
+      "model": "academy:block/node_basic_stage_2"
+    },
+    "facing=north,visual_stage=3": {
+      "model": "academy:block/node_basic_stage_3"
+    },
+    "facing=north,visual_stage=4": {
+      "model": "academy:block/node_basic_stage_4"
+    },
+    "facing=east,visual_stage=0": {
+      "model": "academy:block/node_basic",
+      "y": 90
+    },
+    "facing=east,visual_stage=1": {
+      "model": "academy:block/node_basic_stage_1",
+      "y": 90
+    },
+    "facing=east,visual_stage=2": {
+      "model": "academy:block/node_basic_stage_2",
+      "y": 90
+    },
+    "facing=east,visual_stage=3": {
+      "model": "academy:block/node_basic_stage_3",
+      "y": 90
+    },
+    "facing=east,visual_stage=4": {
+      "model": "academy:block/node_basic_stage_4",
+      "y": 90
+    },
+    "facing=south,visual_stage=0": {
+      "model": "academy:block/node_basic",
+      "y": 180
+    },
+    "facing=south,visual_stage=1": {
+      "model": "academy:block/node_basic_stage_1",
+      "y": 180
+    },
+    "facing=south,visual_stage=2": {
+      "model": "academy:block/node_basic_stage_2",
+      "y": 180
+    },
+    "facing=south,visual_stage=3": {
+      "model": "academy:block/node_basic_stage_3",
+      "y": 180
+    },
+    "facing=south,visual_stage=4": {
+      "model": "academy:block/node_basic_stage_4",
+      "y": 180
+    },
+    "facing=west,visual_stage=0": {
+      "model": "academy:block/node_basic",
+      "y": 270
+    },
+    "facing=west,visual_stage=1": {
+      "model": "academy:block/node_basic_stage_1",
+      "y": 270
+    },
+    "facing=west,visual_stage=2": {
+      "model": "academy:block/node_basic_stage_2",
+      "y": 270
+    },
+    "facing=west,visual_stage=3": {
+      "model": "academy:block/node_basic_stage_3",
+      "y": 270
+    },
+    "facing=west,visual_stage=4": {
+      "model": "academy:block/node_basic_stage_4",
+      "y": 270
+    }
+  }
+}

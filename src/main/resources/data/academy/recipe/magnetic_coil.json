@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PRP",
+    "PRP",
+    "IDI"
+  ],
+  "key": {
+    "P": {
+      "item": "academy:constraint_plate"
+    },
+    "R": {
+      "item": "academy:reso_crystal"
+    },
+    "I": {
+      "item": "academy:reinforced_iron_plate"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    }
+  },
+  "result": {
+    "id": "academy:magnetic_coil",
+    "count": 1
+  }
+}

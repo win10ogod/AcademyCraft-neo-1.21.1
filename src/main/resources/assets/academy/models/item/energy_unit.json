@@ -1,0 +1,20 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "academy:item/energy_unit_empty"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "academy:item/energy_unit_half"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 2
+      },
+      "model": "academy:item/energy_unit_full"
+    }
+  ]
+}

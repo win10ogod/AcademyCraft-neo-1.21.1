@@ -1,0 +1,79 @@
+{
+  "variants": {
+    "facing=north,visual_stage=0": {
+      "model": "academy:block/dev_advanced"
+    },
+    "facing=north,visual_stage=1": {
+      "model": "academy:block/dev_advanced"
+    },
+    "facing=north,visual_stage=2": {
+      "model": "academy:block/dev_advanced"
+    },
+    "facing=north,visual_stage=3": {
+      "model": "academy:block/dev_advanced"
+    },
+    "facing=north,visual_stage=4": {
+      "model": "academy:block/dev_advanced"
+    },
+    "facing=east,visual_stage=0": {
+      "model": "academy:block/dev_advanced",
+      "y": 90
+    },
+    "facing=east,visual_stage=1": {
+      "model": "academy:block/dev_advanced",
+      "y": 90
+    },
+    "facing=east,visual_stage=2": {
+      "model": "academy:block/dev_advanced",
+      "y": 90
+    },
+    "facing=east,visual_stage=3": {
+      "model": "academy:block/dev_advanced",
+      "y": 90
+    },
+    "facing=east,visual_stage=4": {
+      "model": "academy:block/dev_advanced",
+      "y": 90
+    },
+    "facing=south,visual_stage=0": {
+      "model": "academy:block/dev_advanced",
+      "y": 180
+    },
+    "facing=south,visual_stage=1": {
+      "model": "academy:block/dev_advanced",
+      "y": 180
+    },
+    "facing=south,visual_stage=2": {
+      "model": "academy:block/dev_advanced",
+      "y": 180
+    },
+    "facing=south,visual_stage=3": {
+      "model": "academy:block/dev_advanced",
+      "y": 180
+    },
+    "facing=south,visual_stage=4": {
+      "model": "academy:block/dev_advanced",
+      "y": 180
+    },
+    "facing=west,visual_stage=0": {
+      "model": "academy:block/dev_advanced",
+      "y": 270
+    },
+    "facing=west,visual_stage=1": {
+      "model": "academy:block/dev_advanced",
+      "y": 270
+    },
+    "facing=west,visual_stage=2": {
+      "model": "academy:block/dev_advanced",
+      "y": 270
+    },
+    "facing=west,visual_stage=3": {
+      "model": "academy:block/dev_advanced",
+      "y": 270
+    },
+    "facing=west,visual_stage=4": {
+      "model": "academy:block/dev_advanced",
+      "y": 270
+    }
+  }
+}

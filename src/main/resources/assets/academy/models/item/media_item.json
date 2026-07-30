@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "academy:item/media_sisters_noise"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 0
+      },
+      "model": "academy:item/media_0"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "academy:item/media_1"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 2
+      },
+      "model": "academy:item/media_2"
+    }
+  ]
+}

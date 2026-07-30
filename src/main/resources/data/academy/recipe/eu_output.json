@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "EMI",
+    " C "
+  ],
+  "key": {
+    "E": {
+      "item": "minecraft:redstone_block"
+    },
+    "M": {
+      "item": "academy:machine_frame"
+    },
+    "I": {
+      "item": "minecraft:copper_ingot"
+    },
+    "C": {
+      "item": "academy:energy_convert_component"
+    }
+  },
+  "result": {
+    "id": "academy:eu_output",
+    "count": 1
+  }
+}

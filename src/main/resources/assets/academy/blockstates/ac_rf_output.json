@@ -1,0 +1,79 @@
+{
+  "variants": {
+    "facing=north,visual_stage=0": {
+      "model": "academy:block/ac_rf_output"
+    },
+    "facing=north,visual_stage=1": {
+      "model": "academy:block/ac_rf_output"
+    },
+    "facing=north,visual_stage=2": {
+      "model": "academy:block/ac_rf_output"
+    },
+    "facing=north,visual_stage=3": {
+      "model": "academy:block/ac_rf_output"
+    },
+    "facing=north,visual_stage=4": {
+      "model": "academy:block/ac_rf_output"
+    },
+    "facing=east,visual_stage=0": {
+      "model": "academy:block/ac_rf_output",
+      "y": 90
+    },
+    "facing=east,visual_stage=1": {
+      "model": "academy:block/ac_rf_output",
+      "y": 90
+    },
+    "facing=east,visual_stage=2": {
+      "model": "academy:block/ac_rf_output",
+      "y": 90
+    },
+    "facing=east,visual_stage=3": {
+      "model": "academy:block/ac_rf_output",
+      "y": 90
+    },
+    "facing=east,visual_stage=4": {
+      "model": "academy:block/ac_rf_output",
+      "y": 90
+    },
+    "facing=south,visual_stage=0": {
+      "model": "academy:block/ac_rf_output",
+      "y": 180
+    },
+    "facing=south,visual_stage=1": {
+      "model": "academy:block/ac_rf_output",
+      "y": 180
+    },
+    "facing=south,visual_stage=2": {
+      "model": "academy:block/ac_rf_output",
+      "y": 180
+    },
+    "facing=south,visual_stage=3": {
+      "model": "academy:block/ac_rf_output",
+      "y": 180
+    },
+    "facing=south,visual_stage=4": {
+      "model": "academy:block/ac_rf_output",
+      "y": 180
+    },
+    "facing=west,visual_stage=0": {
+      "model": "academy:block/ac_rf_output",
+      "y": 270
+    },
+    "facing=west,visual_stage=1": {
+      "model": "academy:block/ac_rf_output",
+      "y": 270
+    },
+    "facing=west,visual_stage=2": {
+      "model": "academy:block/ac_rf_output",
+      "y": 270
+    },
+    "facing=west,visual_stage=3": {
+      "model": "academy:block/ac_rf_output",
+      "y": 270
+    },
+    "facing=west,visual_stage=4": {
+      "model": "academy:block/ac_rf_output",
+      "y": 270
+    }
+  }
+}
