@@ -13,7 +13,7 @@ Minecraft 1.21.1 requires Java 21. The resulting mod jar is written to `build/li
 ## Installation
 
 Install NeoForge 21.1.242 or newer for Minecraft 1.21.1, then place
-`AcademyCraft-neo-1.21.1-2.0.0.jar` in the instance's `mods` directory. Clients and servers
+`AcademyCraft-neo-1.21.1-2.0.1.jar` in the instance's `mods` directory. Clients and servers
 must use the same jar. Create a new world; legacy saves are not converted.
 
 ## Port status
