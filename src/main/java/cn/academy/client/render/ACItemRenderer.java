@@ -47,7 +47,8 @@ public final class ACItemRenderer extends BlockEntityWithoutLevelRenderer {
             renderCoin(pose, buffers, light, overlay);
             return;
         }
-        if (stack.is(ACItems.MATTER_UNIT.get())) {            int frame = Minecraft.getInstance().level == null ? 0
+        if (stack.is(ACItems.MATTER_UNIT.get())) {
+            int frame = Minecraft.getInstance().level == null ? 0
                     : (int) ((Minecraft.getInstance().level.getGameTime() / 4) % 4);
             String texture = MatterUnitItem.isFilled(stack) ? "matter_unit_phase_liquid_" + frame : "matter_unit";
             renderFlatItem(pose, buffers, light, overlay, ResourceLocation.fromNamespaceAndPath(
@@ -56,20 +57,19 @@ public final class ACItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
         String model = null, texture = null;
         float scale = 1;
-        float yOffset = 0;
         float rotY = 0;
         if (stack.is(ACItems.SOLAR_GEN.get())) { model = texture = "solar"; scale = .014f; rotY = 90; }
-        else if (stack.is(ACItems.PHASE_GEN.get())) { model = "ip_gen"; texture = "ip_gen0"; scale = .85f; yOffset = -.45f; }
-        else if (stack.is(ACItems.MATRIX.get())) { model = texture = "matrix"; scale = .29f; yOffset = -.43f; }
-        else if (stack.is(ACItems.WINDGEN_BASE.get())) { model = texture = "windgen_base"; scale = .42f; yOffset = -.43f; }
-        else if (stack.is(ACItems.WINDGEN_PILLAR.get())) { model = texture = "windgen_pillar"; scale = .72f; yOffset = -.36f; }
-        else if (stack.is(ACItems.WINDGEN_MAIN.get())) { model = texture = "windgen_main"; scale = .43f; yOffset = -.25f; }
-        else if (stack.is(ACItems.DEV_NORMAL.get())) { model = texture = "developer_normal"; scale = .16f; yOffset = -.43f; rotY = 180; }
-        else if (stack.is(ACItems.DEV_ADVANCED.get())) { model = texture = "developer_advanced"; scale = .16f; yOffset = -.43f; rotY = 180; }
-        else if (stack.is(ACItems.DEVELOPER_PORTABLE.get())) { model = texture = "developer_portable"; scale = .32f; rotY = -10; }
+        else if (stack.is(ACItems.PHASE_GEN.get())) { model = "ip_gen"; texture = "ip_gen0"; scale = .85f; }
+        else if (stack.is(ACItems.MATRIX.get())) { model = texture = "matrix"; scale = .29f; }
+        else if (stack.is(ACItems.WINDGEN_BASE.get())) { model = texture = "windgen_base"; scale = .42f; }
+        else if (stack.is(ACItems.WINDGEN_PILLAR.get())) { model = texture = "windgen_pillar"; scale = .72f; }
+        else if (stack.is(ACItems.WINDGEN_MAIN.get())) { model = texture = "windgen_main"; scale = .43f; }
+        else if (stack.is(ACItems.DEV_NORMAL.get())) { model = texture = "developer_normal"; scale = .16f; rotY = 180; }
+        else if (stack.is(ACItems.DEV_ADVANCED.get())) { model = texture = "developer_advanced"; scale = .16f; rotY = 180; }
+        else if (stack.is(ACItems.DEVELOPER_PORTABLE.get())) { model = texture = "developer_portable"; scale = .32f; }
         else if (stack.is(ACItems.TERMINAL_INSTALLER.get())) { model = texture = "terminal_installer"; scale = .42f; rotY = -15; }
-        else if (stack.is(ACItems.MAG_HOOK.get())) { model = texture = "maghook"; scale = .0054f; }
-        else if (stack.is(ACItems.SILBARN.get())) { model = texture = "silbarn"; scale = .075f; rotY = 30; }
+        else if (stack.is(ACItems.MAG_HOOK.get())) { model = texture = "maghook"; scale = .01f; }
+        else if (stack.is(ACItems.SILBARN.get())) { model = texture = "silbarn"; scale = .0625f; }
         else if (stack.is(ACItems.WINDGEN_FAN.get())) { model = texture = "windgen_fan"; scale = .065f; }
 
         if (model == null) {
@@ -77,14 +77,18 @@ public final class ACItemRenderer extends BlockEntityWithoutLevelRenderer {
             return;
         }
         pose.pushPose();
-        pose.translate(.5, .5 + yOffset, .5);
+        // ItemRenderer shifts built-in models by -0.5 after applying the model JSON's display
+        // transform.  Cancel that shift so every legacy OBJ can stay centred around its own origin.
+        pose.translate(.5, .5, .5);
         if (context == ItemDisplayContext.GUI) {
             pose.mulPose(Axis.XP.rotationDegrees(-22));
             pose.mulPose(Axis.YP.rotationDegrees(35));
         }
         if (rotY != 0) pose.mulPose(Axis.YP.rotationDegrees(rotY));
         pose.scale(scale, scale, scale);
-        ACObjModel.get(model).render(pose, buffers.getBuffer(RenderType.entityTranslucent(texture(texture))),
+        if (stack.is(ACItems.SILBARN.get())) pose.mulPose(Axis.XP.rotationDegrees(90));
+        ACObjModel.get(model).renderCentered(pose,
+                buffers.getBuffer(RenderType.entityTranslucent(texture(texture))),
                 light, overlay, 1, 1, 1, 1);
         pose.popPose();
     }

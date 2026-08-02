@@ -1,5 +1,5 @@
 {
-  "parent": "minecraft:builtin/entity",
+  "parent": "academy:item/builtin_block",
   "textures": {
     "particle": "academy:item/windgen_fan"
   }

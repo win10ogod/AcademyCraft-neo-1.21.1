@@ -12,7 +12,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +28,7 @@ public final class ACObjModel {
     private final List<Vector2f> uvs = new ArrayList<>();
     private final List<Vector3f> normals = new ArrayList<>();
     private final List<Triangle> triangles = new ArrayList<>();
+    private final Vector3f center = new Vector3f();
 
     public static ACObjModel get(String name) {
         ResourceLocation location = ResourceLocation.fromNamespaceAndPath(AcademyCraft.MOD_ID, "models/" + name + ".obj");
@@ -66,6 +66,7 @@ public final class ACObjModel {
                     }
                 }
             }
+            model.calculateCenter();
             AcademyCraft.LOGGER.debug("Loaded legacy OBJ {} ({} triangles)", location, model.triangles.size());
         } catch (Exception exception) {
             AcademyCraft.LOGGER.error("Unable to load legacy OBJ {}", location, exception);
@@ -83,6 +84,29 @@ public final class ACObjModel {
     private static int resolve(String value, int size) {
         int index = Integer.parseInt(value);
         return index < 0 ? size + index : index - 1;
+    }
+
+    private void calculateCenter() {
+        if (vertices.isEmpty()) return;
+        float minX = Float.POSITIVE_INFINITY, minY = Float.POSITIVE_INFINITY, minZ = Float.POSITIVE_INFINITY;
+        float maxX = Float.NEGATIVE_INFINITY, maxY = Float.NEGATIVE_INFINITY, maxZ = Float.NEGATIVE_INFINITY;
+        for (Vector3f vertex : vertices) {
+            minX = Math.min(minX, vertex.x);
+            minY = Math.min(minY, vertex.y);
+            minZ = Math.min(minZ, vertex.z);
+            maxX = Math.max(maxX, vertex.x);
+            maxY = Math.max(maxY, vertex.y);
+            maxZ = Math.max(maxZ, vertex.z);
+        }
+        center.set((minX + maxX) * .5f, (minY + maxY) * .5f, (minZ + maxZ) * .5f);
+    }
+
+    public void renderCentered(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay,
+                               float red, float green, float blue, float alpha) {
+        poseStack.pushPose();
+        poseStack.translate(-center.x, -center.y, -center.z);
+        render(poseStack, consumer, packedLight, packedOverlay, red, green, blue, alpha);
+        poseStack.popPose();
     }
 
     public void render(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay,
