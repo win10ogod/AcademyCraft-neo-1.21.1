@@ -62,6 +62,7 @@ public final class ACMachineBlockEntity extends BlockEntity implements MenuProvi
     private int mode;
     private int phaseLiquid;
     private int ticks;
+    private float clientCatRotation;
     private String networkId = "";
     private String networkPasswordHash = "";
     private String networkOwner = "";
@@ -167,6 +168,10 @@ public final class ACMachineBlockEntity extends BlockEntity implements MenuProvi
     public int maxProgress() { return kind == MachineKind.IMAG_FUSOR ? 120 : kind == MachineKind.METAL_FORMER ? 60 : 0; }
     public int mode() { return mode; }
     public int phaseLiquid() { return phaseLiquid; }
+    public float clientCatRotation(float partialTick) {
+        float interpolation = energy.getEnergyStored() < energy.getMaxEnergyStored() ? 250 * partialTick : 0;
+        return (clientCatRotation + interpolation) % 360;
+    }
     public boolean isInterfererActive() { return kind == MachineKind.ABILITY_INTERFERER && interfererEnabled; }
     public double interfererRange() { return interfererRange; }
     public java.util.List<String> interfererWhitelist() { return java.util.List.copyOf(interfererWhitelist); }
@@ -354,19 +359,26 @@ public final class ACMachineBlockEntity extends BlockEntity implements MenuProvi
             int visualStage = switch (machine.kind) {
                 case IMAG_FUSOR -> machine.progress > 0 ? 1 + (machine.ticks / 5) % 4 : 0;
                 case ABILITY_INTERFERER -> machine.interfererEnabled ? 1 : 0;
-                case NODE_BASIC, NODE_STANDARD, NODE_ADVANCED -> machine.networkId.isEmpty() ? 0
-                        : 1 + Math.min(3, machine.energy.getEnergyStored() * 4
-                        / Math.max(1, machine.energy.getMaxEnergyStored()));
+                case NODE_BASIC, NODE_STANDARD, NODE_ADVANCED -> Math.min(4, Math.round(
+                        4f * machine.energy.getEnergyStored() / Math.max(1, machine.energy.getMaxEnergyStored())));
                 default -> 0;
             };
-            if (state.getValue(ACMachineBlock.VISUAL_STAGE) != visualStage)
-                level.setBlock(pos, state.setValue(ACMachineBlock.VISUAL_STAGE, visualStage), Block.UPDATE_CLIENTS);
+            boolean connected = machine.kind.isNetworkNode() && machine.kind != MachineKind.MATRIX
+                    && !machine.networkId.isEmpty();
+            BlockState visualState = state.setValue(ACMachineBlock.VISUAL_STAGE, visualStage)
+                    .setValue(ACMachineBlock.CONNECTED, connected);
+            if (!visualState.equals(state)) level.setBlock(pos, visualState, Block.UPDATE_CLIENTS);
         }
         if (machine.ticks % 20 == 0) machine.sync();
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ACMachineBlockEntity machine) {
         machine.ticks++;
+        if (machine.kind == MachineKind.CAT_ENGINE
+                && machine.energy.getEnergyStored() < machine.energy.getMaxEnergyStored()) {
+            // 1.12.2: deltaMilliseconds * thisTickGeneration(500) * 1e-2.
+            machine.clientCatRotation = (machine.clientCatRotation + 250) % 360;
+        }
     }
 
     private void generate() {

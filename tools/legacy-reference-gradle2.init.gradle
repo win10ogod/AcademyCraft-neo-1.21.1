@@ -1,0 +1,24 @@
+// Repository repairs for running the unmodified 1.12.2 project with its original Gradle era.
+gradle.beforeProject { project ->
+    project.buildscript.repositories {
+        mavenLocal()
+        maven { url = "https://maven.minecraftforge.net" }
+    }
+    project.repositories {
+        mavenLocal()
+        maven { url = "https://maven.minecraftforge.net" }
+        maven { url = "https://maven.blamejared.com" }
+        maven { url = "https://maven.ic2.player.to" }
+    }
+    project.afterEvaluate {
+        project.repositories.removeAll { repository -> repository.name == "private" }
+        // The release jar shades LambdaLib2 (plus AcademyCraft's Scala extensions in the same
+        // package), while the development launch also puts the standalone dependency on its
+        // classpath. Keep the complete release jar and remove only that duplicate runtime jar.
+        if (project.tasks.findByName("runClient") != null) {
+            project.tasks.runClient.doFirst {
+                classpath = classpath.filter { !it.name.startsWith("LambdaLib2-") }
+            }
+        }
+    }
+}

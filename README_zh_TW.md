@@ -13,12 +13,12 @@
 ./gradlew build
 ```
 
-輸出位於 `build/libs/AcademyCraft-neo-1.21.1-2.0.1.jar`。
+輸出位於 `build/libs/AcademyCraft-neo-1.21.1-2.0.3.jar`。
 
 ## 安裝
 
 1. 安裝 **Minecraft Java Edition 1.21.1**、**NeoForge 21.1.242 或更新的 21.1.x**，並以 **Java 21** 啟動。
-2. 將 `AcademyCraft-neo-1.21.1-2.0.1.jar` 放入遊戲實例的 `mods` 目錄。
+2. 將 `AcademyCraft-neo-1.21.1-2.0.3.jar` 放入遊戲實例的 `mods` 目錄。
 3. 客戶端與多人伺服器都必須安裝相同 JAR；建議建立新世界，舊版存檔不支援轉換。
 
 ## 基本操作

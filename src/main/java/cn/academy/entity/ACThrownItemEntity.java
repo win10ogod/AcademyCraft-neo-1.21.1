@@ -135,10 +135,21 @@ public final class ACThrownItemEntity extends ThrowableItemProjectile {
         } else if (getItem().is(ACItems.MAG_HOOK.get())) {
             setHooked(true);
             hookAnchor = hit.getBlockPos().immutable();
-            getEntityData().set(DATA_HOOK_FACE, hit.getDirection().get3DDataValue());
+            var face = hit.getDirection();
+            getEntityData().set(DATA_HOOK_FACE, face.get3DDataValue());
+            switch (face) {
+                case DOWN -> setXRot(-90);
+                case UP -> setXRot(90);
+                case NORTH -> { setYRot(0); setXRot(0); }
+                case SOUTH -> { setYRot(180); setXRot(0); }
+                case WEST -> { setYRot(-90); setXRot(0); }
+                case EAST -> { setYRot(90); setXRot(0); }
+            }
             setNoGravity(true);
             setDeltaMovement(0, 0, 0);
-            setPos(hit.getLocation());
+            setPos(hookAnchor.getX() + .5 + face.getStepX() * .51,
+                    hookAnchor.getY() + .5 + face.getStepY() * .51,
+                    hookAnchor.getZ() + .5 + face.getStepZ() * .51);
         } else {
             if (getItem().is(ACItems.SILBARN.get())) {
                 level().playSound(null, blockPosition(), ACSounds.get("entity.silbarn_light"), SoundSource.PLAYERS, 1, 1);

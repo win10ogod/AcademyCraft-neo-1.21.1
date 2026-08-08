@@ -17,10 +17,13 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import cn.academy.registry.ACMenus;
 import cn.academy.client.screen.ACMachineScreen;
 import cn.academy.client.render.ACMachineRenderer;
+import cn.academy.client.render.ACImagPhaseRenderer;
 import cn.academy.client.render.ACItemRenderer;
 import cn.academy.client.render.ACThrownItemRenderer;
 import cn.academy.client.render.ACElectronBallRenderer;
@@ -36,6 +39,24 @@ import cn.academy.registry.ACParticles;
 
 @EventBusSubscriber(modid = AcademyCraft.MOD_ID, value = Dist.CLIENT)
 public final class ACClientModEvents {
+    static final ResourceLocation IMAG_PHASE_FLUID_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(AcademyCraft.MOD_ID, "block/black");
+    static final int IMAG_PHASE_FLUID_TINT = 0xFFFFFFFF;
+
+    @SubscribeEvent
+    public static void clientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            ResourceLocation energy = ResourceLocation.fromNamespaceAndPath(AcademyCraft.MOD_ID, "energy");
+            ItemProperties.register(ACItems.ENERGY_UNIT.get(), energy,
+                    (stack, level, entity, seed) -> cn.academy.item.EnergyItem.legacyModelValue(stack));
+            ItemProperties.register(ACItems.DEVELOPER_PORTABLE.get(), energy,
+                    (stack, level, entity, seed) -> cn.academy.item.EnergyItem.legacyModelValue(stack));
+            ItemProperties.register(ACItems.MATTER_UNIT.get(),
+                    ResourceLocation.fromNamespaceAndPath(AcademyCraft.MOD_ID, "frame"),
+                    (stack, level, entity, seed) -> level == null ? 0 : (level.getGameTime() / 5) % 4);
+        });
+    }
+
     @SubscribeEvent
     public static void registerShaders(RegisterShadersEvent event) {
         ACShaders.register(event);
@@ -73,17 +94,15 @@ public final class ACClientModEvents {
         event.registerEntityRenderer(ACEntities.THROWN_ITEM.get(), ACThrownItemRenderer::new);
         event.registerEntityRenderer(ACEntities.ELECTRON_BALL.get(), ACElectronBallRenderer::new);
         event.registerBlockEntityRenderer(ACBlockEntities.MACHINE.get(), ACMachineRenderer::new);
+        event.registerBlockEntityRenderer(ACBlockEntities.IMAG_PHASE.get(), ACImagPhaseRenderer::new);
     }
 
     @SubscribeEvent
     public static void registerFluidRendering(RegisterClientExtensionsEvent event) {
         event.registerFluidType(new IClientFluidTypeExtensions() {
-            private static final ResourceLocation TEXTURE =
-                    ResourceLocation.fromNamespaceAndPath(AcademyCraft.MOD_ID, "block/phase_liquid");
-
-            @Override public ResourceLocation getStillTexture() { return TEXTURE; }
-            @Override public ResourceLocation getFlowingTexture() { return TEXTURE; }
-            @Override public int getTintColor() { return 0xCC66DDEB; }
+            @Override public ResourceLocation getStillTexture() { return IMAG_PHASE_FLUID_TEXTURE; }
+            @Override public ResourceLocation getFlowingTexture() { return IMAG_PHASE_FLUID_TEXTURE; }
+            @Override public int getTintColor() { return IMAG_PHASE_FLUID_TINT; }
         }, ACFluids.IMAG_PHASE_TYPE.get());
 
         IClientItemExtensions legacyModels = new IClientItemExtensions() {
@@ -92,11 +111,10 @@ public final class ACClientModEvents {
             @Override public boolean shouldBobAsEntity(net.minecraft.world.item.ItemStack stack) { return false; }
         };
         event.registerItem(legacyModels,
-                ACItems.SOLAR_GEN.get(), ACItems.PHASE_GEN.get(), ACItems.MATRIX.get(), ACItems.CAT_ENGINE.get(),
-                ACItems.WINDGEN_BASE.get(), ACItems.WINDGEN_PILLAR.get(), ACItems.WINDGEN_MAIN.get(),
-                ACItems.DEV_NORMAL.get(), ACItems.DEV_ADVANCED.get(), ACItems.DEVELOPER_PORTABLE.get(),
-                ACItems.TERMINAL_INSTALLER.get(), ACItems.MAG_HOOK.get(), ACItems.SILBARN.get(),
-                ACItems.WINDGEN_FAN.get(), ACItems.MATTER_UNIT.get(), ACItems.COIN.get());
+                // These are exactly the four 1.12.2 items backed by a TEISR. Matter unit uses a
+                // regular generated model plus its legacy frame item property.
+                ACItems.DEVELOPER_PORTABLE.get(), ACItems.MAG_HOOK.get(), ACItems.SILBARN.get(),
+                ACItems.COIN.get());
     }
 
     @SubscribeEvent

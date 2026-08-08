@@ -6,13 +6,13 @@
   "overrides": [
     {
       "predicate": {
-        "custom_model_data": 1
+        "academy:energy": 0.5
       },
       "model": "academy:item/energy_unit_half"
     },
     {
       "predicate": {
-        "custom_model_data": 2
+        "academy:energy": 1
       },
       "model": "academy:item/energy_unit_full"
     }

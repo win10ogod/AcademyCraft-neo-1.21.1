@@ -1,6 +1,14 @@
 {
-  "parent": "academy:item/builtin_generated",
+  "parent": "minecraft:item/generated",
   "textures": {
-    "particle": "academy:item/matter_unit"
-  }
+    "layer0": "academy:item/matter_unit"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "academy:item/matter_unit_phase_liquid_0"
+    }
+  ]
 }
