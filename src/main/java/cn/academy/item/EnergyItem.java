@@ -7,8 +7,6 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
 import java.util.List;
-import net.minecraft.world.item.component.CustomModelData;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -43,13 +41,21 @@ public final class EnergyItem extends Item {
             ItemStack empty = new ItemStack(ACItems.ENERGY_UNIT.get(), remainder);
             if (!player.getInventory().add(empty)) player.drop(empty, false);
         }
-        int stage = energy <= 0 ? 0 : energy >= capacity ? 2 : 1;
-        CustomModelData current = stack.get(DataComponents.CUSTOM_MODEL_DATA);
-        if (stage == 0) {
-            if (current != null) stack.remove(DataComponents.CUSTOM_MODEL_DATA);
-        } else if (current == null || current.value() != stage) {
-            stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(stage));
-        }
+    }
+
+    /**
+     * Reproduces ItemEnergyBase's 1.12.2 damage-to-icon thresholds. The legacy item first mapped
+     * energy onto damage 0..13, then used damage &lt; 3 for full, damage &gt; 10 for empty and the
+     * remaining values for half. Keeping that quantisation matters near the two boundaries.
+     */
+    public static int legacyModelStage(int energy, int capacity) {
+        int damage = Math.round((1 - Math.max(0, Math.min(energy, capacity)) / (float) Math.max(1, capacity)) * 13);
+        return damage < 3 ? 2 : damage > 10 ? 0 : 1;
+    }
+
+    public static float legacyModelValue(ItemStack stack) {
+        if (!(stack.getItem() instanceof EnergyItem item)) return 0;
+        return legacyModelStage(stack.getOrDefault(ACDataComponents.ENERGY.get(), 0), item.capacity) * .5f;
     }
 
     @Override

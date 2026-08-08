@@ -3,6 +3,7 @@ package cn.academy.registry;
 import cn.academy.AcademyCraft;
 import cn.academy.block.entity.ACMachineBlockEntity;
 import cn.academy.block.entity.ACMultiblockPartEntity;
+import cn.academy.block.entity.ACImagPhaseBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
@@ -16,6 +17,10 @@ public final class ACBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ACMultiblockPartEntity>> MULTIBLOCK_PART =
             TYPES.register("multiblock_part", () -> BlockEntityType.Builder.of(ACMultiblockPartEntity::new,
                     ACBlocks.MULTIBLOCK_PART.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ACImagPhaseBlockEntity>> IMAG_PHASE =
+            TYPES.register("imag_phase", () -> BlockEntityType.Builder.of(ACImagPhaseBlockEntity::new,
+                    ACBlocks.IMAG_PHASE.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ACMachineBlockEntity>> MACHINE =
             TYPES.register("machine", () -> BlockEntityType.Builder.of(ACMachineBlockEntity::new,

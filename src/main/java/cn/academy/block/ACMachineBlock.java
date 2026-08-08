@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -26,17 +27,28 @@ import org.jetbrains.annotations.Nullable;
 
 public final class ACMachineBlock extends Block implements EntityBlock {
     public static final IntegerProperty VISUAL_STAGE = IntegerProperty.create("visual_stage", 0, 4);
+    public static final BooleanProperty CONNECTED = BooleanProperty.create("connected");
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     private final MachineKind kind;
 
     public ACMachineBlock(MachineKind kind, BlockBehaviour.Properties properties) {
         super(properties);
         this.kind = kind;
-        registerDefaultState(stateDefinition.any().setValue(VISUAL_STAGE, 0).setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(VISUAL_STAGE, 0).setValue(CONNECTED, false)
+                .setValue(FACING, Direction.NORTH));
     }
 
     public MachineKind kind() {
         return kind;
+    }
+
+    /** Machines whose 1.12.2 blocks were invisible, non-opaque TESR hosts. */
+    public static boolean usesLegacyBlockEntityModel(MachineKind kind) {
+        return switch (kind) {
+            case CAT_ENGINE, SOLAR_GENERATOR, PHASE_GENERATOR, MATRIX, WIND_BASE, WIND_PILLAR,
+                    WIND_GENERATOR, DEVELOPER_NORMAL, DEVELOPER_ADVANCED -> true;
+            default -> false;
+        };
     }
 
     public int[][] multiblockOffsets() {
@@ -55,7 +67,7 @@ public final class ACMachineBlock extends Block implements EntityBlock {
 
     private int[][] orientedOffsets(Direction facing) {
         int[][] source = multiblockOffsets();
-        if (kind == MachineKind.MATRIX || facing == Direction.NORTH) return source;
+        if (facing == Direction.NORTH) return source;
         int[][] result = new int[source.length][3];
         for (int index = 0; index < source.length; index++) {
             int x = source[index][0], y = source[index][1], z = source[index][2];
@@ -99,16 +111,12 @@ public final class ACMachineBlock extends Block implements EntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(VISUAL_STAGE, FACING);
+        builder.add(VISUAL_STAGE, CONNECTED, FACING);
     }
 
     @Override
     protected RenderShape getRenderShape(BlockState state) {
-        return switch (kind) {
-            case CAT_ENGINE, SOLAR_GENERATOR, PHASE_GENERATOR, MATRIX, WIND_BASE, WIND_PILLAR,
-                    WIND_GENERATOR, DEVELOPER_NORMAL, DEVELOPER_ADVANCED -> RenderShape.ENTITYBLOCK_ANIMATED;
-            default -> RenderShape.MODEL;
-        };
+        return usesLegacyBlockEntityModel(kind) ? RenderShape.ENTITYBLOCK_ANIMATED : RenderShape.MODEL;
     }
 
     @Override

@@ -6,6 +6,7 @@ repeatable when an original translation or texture is updated.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import shutil
 import subprocess
@@ -30,11 +31,49 @@ BLOCKS = [
     "node_advanced", "node_basic", "node_standard", "phase_gen", "reso_ore", "solar_gen",
     "windgen_base", "windgen_main", "windgen_pillar", "ac_rf_input", "ac_rf_output", "eu_input", "eu_output",
 ]
+MACHINE_BLOCKS = {
+    "ability_interferer", "cat_engine", "dev_advanced", "dev_normal", "imag_fusor", "matrix",
+    "metal_former", "node_advanced", "node_basic", "node_standard", "phase_gen", "solar_gen",
+    "windgen_base", "windgen_main", "windgen_pillar", "ac_rf_input", "ac_rf_output", "eu_input", "eu_output",
+}
+NODE_BLOCKS = {"node_advanced", "node_basic", "node_standard"}
 
 
 def dump(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def machine_model(name: str, connected: bool, stage: int) -> str:
+    if name in NODE_BLOCKS:
+        if stage == 0:
+            return f"academy:block/{name + '_connected_stage_0' if connected else name}"
+        suffix = f"_stage_{stage}" if connected else f"_disconnected_stage_{stage}"
+        return f"academy:block/{name}{suffix}"
+    if name == "imag_fusor" and stage > 0:
+        return f"academy:block/imag_fusor_working_{stage}"
+    if name == "ability_interferer" and stage > 0:
+        return "academy:block/ability_interferer_on"
+    return f"academy:block/{name}"
+
+
+def machine_blockstate(name: str) -> dict[str, object]:
+    rotations = {"north": 0, "east": 90, "south": 180, "west": 270}
+    variants: dict[str, object] = {}
+    for connected in (False, True):
+        for facing, rotation in rotations.items():
+            for stage in range(5):
+                variant = {"model": machine_model(name, connected, stage)}
+                if name not in NODE_BLOCKS and rotation:
+                    variant["y"] = rotation
+                key = f"connected={str(connected).lower()},facing={facing},visual_stage={stage}"
+                variants[key] = variant
+    return {"variants": variants}
+
+
+def generate_machine_blockstates() -> None:
+    for name in sorted(MACHINE_BLOCKS):
+        dump(ASSETS / "blockstates" / f"{name}.json", machine_blockstate(name))
 
 
 def parse_lang_text(text: str) -> dict[str, str]:
@@ -272,20 +311,46 @@ def generate_models() -> None:
         "coin": "coin_front", "developer_portable": "developer_portable_empty", "energy_unit": "energy_unit_empty",
         "induction_factor": "factor_electromaster", "mat_core": "mat_core_0", "media_item": "media_sisters_noise",
     }
-    entity_items = {"coin", "developer_portable", "terminal_installer", "mag_hook", "silbarn", "windgen_fan", "matter_unit"}
+    # In 1.12.2 only these four items used BakedModelForTEISR. Developer, mag hook
+    # and silbarn nevertheless returned their ordinary generated model in GUI context.
+    separate_gui_items = {"developer_portable", "mag_hook", "silbarn"}
     for name in ITEMS:
-        model = ({
+        texture = item_textures.get(name, name)
+        if name == "coin":
+            model = {
             "parent": "minecraft:builtin/entity",
-            "textures": {"particle": f"academy:item/{item_textures.get(name, name)}"},
-        } if name in entity_items else {
-            "parent": "minecraft:item/generated",
-            "textures": {"layer0": f"academy:item/{item_textures.get(name, name)}"},
-        })
+            "textures": {"particle": f"academy:item/{texture}"},
+            }
+        elif name in separate_gui_items:
+            model = {
+                "loader": "neoforge:separate_transforms",
+                "base": {
+                    "parent": "minecraft:builtin/entity",
+                    "textures": {"particle": f"academy:item/{texture}"},
+                },
+                "perspectives": {"gui": {
+                    "parent": "minecraft:item/generated",
+                    "textures": {"layer0": f"academy:item/{texture}"},
+                }},
+            }
+        else:
+            model = {
+                "parent": "minecraft:item/generated",
+                "textures": {"layer0": f"academy:item/{texture}"},
+            }
         if name == "energy_unit":
             model["overrides"] = [
-                {"predicate": {"custom_model_data": 1}, "model": "academy:item/energy_unit_half"},
-                {"predicate": {"custom_model_data": 2}, "model": "academy:item/energy_unit_full"},
+                {"predicate": {"academy:energy": .5}, "model": "academy:item/energy_unit_half"},
+                {"predicate": {"academy:energy": 1}, "model": "academy:item/energy_unit_full"},
             ]
+        elif name == "developer_portable":
+            model["overrides"] = [
+                {"predicate": {"academy:energy": .5}, "model": "academy:item/developer_portable_half"},
+                {"predicate": {"academy:energy": 1}, "model": "academy:item/developer_portable_full"},
+            ]
+        elif name == "matter_unit":
+            model["overrides"] = [{"predicate": {"custom_model_data": 1},
+                                   "model": "academy:item/matter_unit_phase_liquid_0"}]
         elif name == "induction_factor":
             model["overrides"] = [
                 {"predicate": {"custom_model_data": index}, "model": f"academy:item/factor_{category}"}
@@ -302,7 +367,29 @@ def generate_models() -> None:
                 for index in range(3)
             ]
         dump(model_root / "item" / f"{name}.json", model)
-    dump(model_root / "item/matter_unit_filled.json", {"parent": "minecraft:item/generated", "textures": {"layer0": "academy:item/matter_unit_phase_liquid_0"}})
+    for stage in ("half", "full"):
+        texture = f"developer_portable_{stage}"
+        dump(model_root / "item" / f"developer_portable_{stage}.json", {
+            "loader": "neoforge:separate_transforms",
+            "base": {
+                "parent": "minecraft:builtin/entity",
+                "textures": {"particle": f"academy:item/{texture}"},
+            },
+            "perspectives": {"gui": {
+                "parent": "minecraft:item/generated",
+                "textures": {"layer0": f"academy:item/{texture}"},
+            }},
+        })
+    for frame in range(4):
+        phase_model = {"parent": "minecraft:item/generated",
+                       "textures": {"layer0": f"academy:item/matter_unit_phase_liquid_{frame}"}}
+        if frame == 0:
+            phase_model["overrides"] = [
+                {"predicate": {"academy:frame": next_frame},
+                 "model": f"academy:item/matter_unit_phase_liquid_{next_frame}"}
+                for next_frame in range(1, 4)
+            ]
+        dump(model_root / "item" / f"matter_unit_phase_liquid_{frame}.json", phase_model)
     for stage in ("half", "full"):
         dump(model_root / "item" / f"energy_unit_{stage}.json", {"parent": "minecraft:item/generated",
             "textures": {"layer0": f"academy:item/energy_unit_{stage}"}})
@@ -320,10 +407,9 @@ def generate_models() -> None:
         "node_basic": "node_basic_side_0", "node_standard": "node_standard_side_0",
         "node_advanced": "node_advanced_side_0", "ac_rf_input": "rf_input", "ac_rf_output": "rf_output",
     })
-    machine_blocks = {
-        "ability_interferer", "cat_engine", "dev_advanced", "dev_normal", "imag_fusor", "matrix",
-        "metal_former", "node_advanced", "node_basic", "node_standard", "phase_gen", "solar_gen",
-        "windgen_base", "windgen_main", "windgen_pillar", "ac_rf_input", "ac_rf_output", "eu_input", "eu_output",
+    legacy_flat_block_items = {
+        "cat_engine", "dev_advanced", "dev_normal", "imag_phase", "matrix", "phase_gen",
+        "solar_gen", "windgen_base", "windgen_main", "windgen_pillar",
     }
     for name in BLOCKS:
         if name.startswith("node_"):
@@ -377,22 +463,30 @@ def generate_models() -> None:
                     active["textures"][side] = f"academy:block/{name}_side_{stage}"
                 active["textures"]["up"] = active["textures"]["down"] = "academy:block/node_top_1"
                 dump(model_root / "block" / f"{stage_name}.json", active)
+                dump(model_root / "block" / f"{name}_disconnected_stage_{stage}.json", {
+                    "parent": f"academy:block/{stage_name}",
+                    "textures": {"up": "academy:block/node_top_0", "down": "academy:block/node_top_0"},
+                })
+            dump(model_root / "block" / f"{name}_connected_stage_0.json", {
+                "parent": f"academy:block/{name}",
+                "textures": {"up": "academy:block/node_top_1", "down": "academy:block/node_top_1"},
+            })
         elif name == "ability_interferer":
             stage_models[1:] = ["ability_interferer_on"] * 4
             dump(model_root / "block/ability_interferer_on.json", {
                 "parent": "minecraft:block/cube_all", "textures": {"all": "academy:block/ability_interf_on"}})
-        if name in machine_blocks:
-            rotations = {"north": 0, "east": 90, "south": 180, "west": 270}
-            variants = {
-                f"facing={facing},visual_stage={stage}": {
-                    "model": f"academy:block/{stage_models[stage]}", **({"y": rotation} if rotation else {})
-                }
-                for facing, rotation in rotations.items() for stage in range(5)
-            }
+        if name in MACHINE_BLOCKS:
+            variants = machine_blockstate(name)["variants"]
         else:
             variants = {"": {"model": f"academy:block/{name}"}}
         dump(ASSETS / "blockstates" / f"{name}.json", {"variants": variants})
-        dump(model_root / "item" / f"{name}.json", {"parent": f"academy:block/{name}"})
+        if name in legacy_flat_block_items:
+            texture_name = "phase_liquid" if name == "imag_phase" else name
+            item_model = {"parent": "minecraft:item/generated",
+                          "textures": {"layer0": f"academy:block/{texture_name}"}}
+        else:
+            item_model = {"parent": f"academy:block/{name}"}
+        dump(model_root / "item" / f"{name}.json", item_model)
     dump(model_root / "block/multiblock_part.json", {
         "textures": {"particle": "academy:block/machine_side"}, "elements": []})
     dump(ASSETS / "blockstates/multiblock_part.json", {
@@ -706,6 +800,13 @@ def generate_worldgen() -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--machine-blockstates-only", action="store_true")
+    args = parser.parse_args()
+    if args.machine_blockstates_only:
+        generate_machine_blockstates()
+        print("AcademyCraft machine blockstates regenerated.")
+        return
     convert_languages()
     generate_models()
     generate_recipes()

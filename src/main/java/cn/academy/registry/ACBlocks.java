@@ -3,11 +3,11 @@ package cn.academy.registry;
 import cn.academy.AcademyCraft;
 import cn.academy.block.ACMachineBlock;
 import cn.academy.block.ACMultiblockPartBlock;
+import cn.academy.block.ACImagPhaseBlock;
 import cn.academy.block.MachineKind;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DropExperienceBlock;
-import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -28,14 +28,14 @@ public final class ACBlocks {
     public static final DeferredBlock<Block> CRYSTAL_ORE = ore("crystal_ore", 3.0f, 2, 5);
     public static final DeferredBlock<Block> IMAGSIL_ORE = ore("imagsil_ore", 3.75f, 2, 4);
     public static final DeferredBlock<Block> RESO_ORE = ore("reso_ore", 3.0f, 2, 5);
-    public static final DeferredBlock<LiquidBlock> IMAG_PHASE = add("imag_phase", () -> new LiquidBlock(
+    public static final DeferredBlock<ACImagPhaseBlock> IMAG_PHASE = add("imag_phase", () -> new ACImagPhaseBlock(
             ACFluids.IMAG_PHASE.get(), BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN)
                     .replaceable().noCollission().strength(100.0f).pushReaction(PushReaction.DESTROY)
                     .liquid().noLootTable().lightLevel(state -> 6).sound(SoundType.EMPTY)));
 
     public static final DeferredBlock<ACMultiblockPartBlock> MULTIBLOCK_PART = BLOCKS.register("multiblock_part", () ->
             new ACMultiblockPartBlock(BlockBehaviour.Properties.of().mapColor(MapColor.NONE).strength(4, 8)
-                    .noLootTable().pushReaction(PushReaction.BLOCK)));
+                    .noOcclusion().noLootTable().pushReaction(PushReaction.BLOCK)));
 
     public static final DeferredBlock<Block> MACHINE_FRAME = add("machine_frame", () -> new Block(
             BlockBehaviour.Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops()
@@ -67,10 +67,17 @@ public final class ACBlocks {
     }
 
     private static DeferredBlock<ACMachineBlock> machine(String name, MachineKind kind, float hardness) {
-        return add(name, () -> new ACMachineBlock(kind, BlockBehaviour.Properties.of().mapColor(MapColor.METAL)
-                .requiresCorrectToolForDrops().strength(hardness, 8.0f).sound(SoundType.METAL)
-                .lightLevel(state -> kind == MachineKind.MATRIX ? 15 : 0)
-                .pushReaction(PushReaction.BLOCK)));
+        return add(name, () -> {
+            BlockBehaviour.Properties properties = BlockBehaviour.Properties.of().mapColor(MapColor.METAL)
+                    .requiresCorrectToolForDrops().strength(hardness, 8.0f).sound(SoundType.METAL)
+                    .lightLevel(state -> kind == MachineKind.MATRIX ? 15 : 0)
+                    .pushReaction(PushReaction.BLOCK);
+            // BlockMulti and the four standalone TESR blocks all returned isOpaqueCube=false in 1.12.2.
+            // Keeping the default full-cube occlusion shape makes the block entity sample darkness at its
+            // own position and turns the original OBJ textures almost black.
+            if (ACMachineBlock.usesLegacyBlockEntityModel(kind)) properties.noOcclusion();
+            return new ACMachineBlock(kind, properties);
+        });
     }
 
     private static <T extends Block> DeferredBlock<T> add(String name, Supplier<T> supplier) {

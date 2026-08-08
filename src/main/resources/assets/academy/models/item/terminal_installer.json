@@ -1,6 +1,6 @@
 {
-  "parent": "academy:item/builtin_block",
+  "parent": "minecraft:item/generated",
   "textures": {
-    "particle": "academy:item/terminal_installer"
+    "layer0": "academy:item/terminal_installer"
   }
 }

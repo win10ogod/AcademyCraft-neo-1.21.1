@@ -1,5 +1,5 @@
 {
-  "parent": "academy:item/builtin_generated",
+  "parent": "minecraft:builtin/entity",
   "textures": {
     "particle": "academy:item/coin_front"
   }

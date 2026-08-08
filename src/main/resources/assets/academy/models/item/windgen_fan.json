@@ -1,6 +1,6 @@
 {
-  "parent": "academy:item/builtin_block",
+  "parent": "minecraft:item/generated",
   "textures": {
-    "particle": "academy:item/windgen_fan"
+    "layer0": "academy:item/windgen_fan"
   }
 }
